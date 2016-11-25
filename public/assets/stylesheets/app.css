@@ -1,0 +1,12 @@
+/* imported less */
+h1 {
+  color: red !important;
+  text-transform: uppercase !important;
+}
+.ui.grid.fullscreen.dashboard {
+  height: calc(100vh - 40px);
+}
+.row.fullscreen.auth {
+  height: 100vh;
+}
+/* endimport */

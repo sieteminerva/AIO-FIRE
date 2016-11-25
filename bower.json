@@ -1,0 +1,28 @@
+{
+  "name": "aiofire",
+  "authors": [
+    "galih.hayuningtyas@outlook.com <galih.hayuningtyas@outlook.com>"
+  ],
+  "description": "testing firebase",
+  "main": "index.js",
+  "keywords": [
+    "s"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "firebase": "^3.6.1",
+    "angular": "^1.5.9",
+    "semantic": "^2.2.6",
+    "angularfire": "^2.1.0",
+    "angular-ui-router": "ui-router#^0.3.2"
+  }
+}

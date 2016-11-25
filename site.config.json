@@ -1,0 +1,28 @@
+{
+  "title": "AIO - Static Site Generator",
+  "description": "Anggraeni & Partners Official Website",
+  "keywords": "ap-lawsolution, anggraeni & partners, firma hukum jakarta, hukum perkapalan, law firm, nasihat hukum",
+  "name": "Anggraeni & Partners",
+  "url": "http://ap-lawsolution.com",
+  "message": "AIO Site Generator",
+  "developer": "AIO Technology",
+  "developerUrl": "http://allinonedoor.com",
+  "section": {
+
+  },
+  "scripts": [
+    "libs/jquery/jquery.min.js",
+    "libs/semantic/semantic.min.js",
+    "libs/slick/slick.min.js",
+    "libs/progress/circle-progress.js",
+    "js/scripts.js"
+  ],
+  "styles": [
+    "libs/semantic/semantic.min.css",
+    "css/semantic.color.css",
+    "libs/slick/slick-theme.css",
+    "libs/slick/slick.css",
+    "css/main.css",
+    "css/aplaw-icons.css"
+  ]
+}

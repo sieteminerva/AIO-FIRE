@@ -9,4 +9,7 @@ h1 {
 .row.fullscreen.auth {
   height: 100vh;
 }
+.column.editor {
+  overflow-y: scroll !important;
+}
 /* endimport */

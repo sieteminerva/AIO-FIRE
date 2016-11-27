@@ -1,8 +1,4 @@
 /* imported less */
-h1 {
-  color: red !important;
-  text-transform: uppercase !important;
-}
 .ui.grid.fullscreen.dashboard {
   height: calc(100vh - 40px);
 }
@@ -11,5 +7,9 @@ h1 {
 }
 .column.editor {
   overflow-y: scroll !important;
+}
+h1 {
+  color: red !important;
+  text-transform: uppercase !important;
 }
 /* endimport */

@@ -152,7 +152,7 @@ var options = {
 
 // injecting less
 gulp.task('aio-inject:kitchen:less', function(done) {
-    var lessSource = gulp.src([src + 'app/**/*.less'], { read: false });
+    var lessSource = gulp.src([src + '+(modules|core)/**/*.less'], { read: false });
     return gulp
         .src([src + 'app.less'])
         .pipe(plugins.inject(lessSource, options.injection.kitchen.less))
@@ -308,7 +308,7 @@ gulp.task('aio-inject:kitchen:frameworks', function(done) {
 // Watching files task
 gulp.task('aio-watch:kitchen', function() {
     // watch src less files
-    var lessKitchenFiles = [src + 'app/' + options.allFiles.less];
+    var lessKitchenFiles = [src + '+(modules|core)/' + options.allFiles.less];
     plugins.watch(lessKitchenFiles, function() {
         gulp.start('aio-inject:kitchen:less');
     });

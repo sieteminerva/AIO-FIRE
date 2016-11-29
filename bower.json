@@ -23,6 +23,7 @@
     "angular": "^1.5.9",
     "semantic": "^2.2.6",
     "angularfire": "^2.1.0",
-    "angular-ui-router": "ui-router#^0.3.2"
+    "angular-ui-router": "ui-router#^0.3.2",
+    "angular-filter": "^0.5.11"
   }
 }

@@ -9,6 +9,7 @@ var wiredep = require('wiredep').stream;
 var mainBowerFiles = require('main-bower-files');
 var templateCache = require('gulp-angular-templatecache');
 var runSequence = require('run-sequence');
+var ngAnnotate = require('gulp-ng-annotate');
 
 /* Variable Folder */
 var base = './';
@@ -209,6 +210,11 @@ gulp.task('aio-concat:js:code', function(done){
         src + '**/*.js',
         '!' + frameworks + 'aio.frameworks.js'
   ])
+  .pipe(ngAnnotate({
+    remove: true,
+    add: true,
+    single_quotes: true
+  }))
   .pipe(plugins.concat('aio-app.js'))
   .pipe(gulp.dest(assets + 'scripts/'))
   .pipe(browserSync.reload({stream:true}));
@@ -364,9 +370,9 @@ gulp.task('aio-server:kitchen', function() {
         }],
         files: [{
             match: [
-                src + ' **/*.{less, js}',
-                assets + 'scripts/*.js}',
-                assets + 'stylesheets/*.css}',
+                src + '**/*.{less, js}',
+                //assets + 'scripts/**/*.js',
+                assets + 'stylesheets/**/*.css',
             ],
         }],
         ghostMode: {

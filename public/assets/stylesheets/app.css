@@ -5,8 +5,58 @@
 .row.fullscreen.auth {
   height: 100vh;
 }
-.column.editor {
+.scrollable.column {
   overflow-y: scroll !important;
+}
+.ui.scrollable.feed.segment {
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  height: calc(100vh - 40px - (80px + 2em) - (40px + 2em) - (35px + 2em));
+}
+.row.heading {
+  height: 80px;
+}
+.row.main {
+  height: calc(100vh - 40px - 80px);
+}
+.ui.top.menu.dashboard {
+  height: 60px !important;
+}
+.ui.menu.module {
+  margin-bottom: 1em;
+}
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-button {
+  width: 0px;
+  height: 0px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 6px none #ff8000;
+  border-radius: 50px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #808080;
+}
+::-webkit-scrollbar-thumb:active {
+  background: #707070;
+}
+::-webkit-scrollbar-track {
+  background: #c0c0c0;
+  border: 9px none #0000ff;
+  border-radius: 50px;
+}
+::-webkit-scrollbar-track:hover {
+  background: #c0c0c0;
+}
+::-webkit-scrollbar-track:active {
+  background: #e4e4e4;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 h1 {
   color: red !important;

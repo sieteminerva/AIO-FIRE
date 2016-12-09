@@ -14,10 +14,13 @@ var ngAnnotate = require('gulp-ng-annotate');
 /* Variable Folder */
 var base = './';
 var dest = base + 'public/';
-var src = base + '_kitchen/';
+var build = base + 'build/';
+var src = base + '_kitchen/_app/';
 var temp = base + '.tmp/';
 var assets = dest + 'assets/';
 var frameworks = assets + 'frameworks/';
+var templateSrc = base + '_kitchen/_templates/_source/';
+var templateCooked = base + '_kitchen/_templates/_cooked/';
 
 /* Logging Message */
 function log(msg) {
@@ -145,15 +148,54 @@ var options = {
           filename: 'aio-view.templates.js'
         },
         html: {
-          cwd: '_kitchen/'
+          cwd: '_kitchen/_app/'
         }
       },
     }
 };
 
+// Clean Kitchen template folder
+gulp.task('aio-clean:kitchen:template', function(done){
+  return gulp
+    .src(templateCooked, {read:false})
+    .pipe(plugins.clean());
+});
+
+// Break html templates to partial jade files
+gulp.task('aio-break:template:html', function(done){
+  return gulp
+    .src([templateSrc + '**/*.html'])
+    .pipe(plugins.htmlsplit())
+    .pipe(gulp.dest(templateCooked + 'html/'))
+    .pipe(plugins.html2jade({
+      nspaces:2,
+      pretty:true,
+      bodyless:true,
+      double: true,
+      noemptypipe: true,
+      noattrcomma: true
+    }))
+    .pipe(plugins.rename(function(path){
+      path.extname = ".pug"
+    }))
+    .pipe(gulp.dest(templateCooked + 'pug/'))
+  done();
+});
+
+// Break long less style to partial less files
+gulp.task('aio-break:template:less', function(done){
+  return gulp
+    .src([templateSrc + 'assets/**/*.less'])
+    .pipe(plugins.htmlsplit())
+    .pipe(plugins.replace('*/', ''))
+    .pipe(plugins.replace('/*', ''))
+    .pipe(gulp.dest(templateCooked))
+  done();
+});
+
 // injecting less
 gulp.task('aio-inject:kitchen:less', function(done) {
-    var lessSource = gulp.src([src + '+(modules|core)/**/*.less'], { read: false });
+    var lessSource = gulp.src([src + '+(modules|core|shared)/**/*.less'], { read: false });
     return gulp
         .src([src + 'app.less'])
         .pipe(plugins.inject(lessSource, options.injection.kitchen.less))
@@ -169,6 +211,7 @@ gulp.task('aio-compile:kitchen:less', function(done) {
         .pipe(plugins.less())
         .pipe(plugins.autoprefixer({ browsers: ['last 2 versions', '> 5%'] }))
         .pipe(gulp.dest(assets + 'stylesheets'))
+        //.pipe(browserSync.reload({stream:true}))
     done();
 });
 
@@ -180,11 +223,13 @@ gulp.task('aio-compile:angular-template', function() {
     .src([src + options.allFiles.pug])
     .pipe(plugins.changed(assets + 'scripts/' + 'aio-view.templates.js'))
     .pipe(plugins.data(function() {
-      return JSON.parse(fs.readFileSync('./site.config.json'));
+      return require('./site.config.json');
     }))
     .pipe(plugins.plumber())
     .pipe(plugins.changed(src + options.allFiles.pug))
-    .pipe(plugins.pug({ pretty: true }))
+    .pipe(plugins.pug({
+      pretty: true,
+     }))
     .pipe(plugins.htmlmin({collapseWhitespace: true}))
     .pipe(templateCache(options.template.view.angular))
     .pipe(gulp.dest(assets + 'scripts/'))
@@ -365,7 +410,7 @@ gulp.task('aio-server:kitchen', function() {
         plugins: [{
             module: 'bs-html-injector',
             options: {
-                files: [base + 'index.html', dest + 'views/*.html']
+                files: [base + 'index.html']
             }
         }],
         files: [{
@@ -390,6 +435,38 @@ gulp.task('aio-server:kitchen', function() {
     });
 });
 
+/* BUILD FOR PRODUCTION TASK */
+
+var optimizeCss = lazypipe()
+  // .pipe(plugins.replace('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin', ''))
+  // .pipe(plugins.replace('Lato', 'Open Sans'))
+  .pipe(plugins.replace, '"./themes/default/assets/fonts/', '"../fonts/icons/')
+  .pipe(plugins.replace, '"./themes/default/assets/images/', '"../images/');
+
+gulp.task('aio-clean:build', function(done){
+  return gulp
+    .src(build, {read:false})
+    .pipe(plugins.clean())
+  done();
+});
+
+gulp.task('aio-copy:assets', function(done){
+  return gulp
+    .src([assets + '+(images|documents|fonts)/**/*'])
+    .pipe(gulp.dest(build + 'assets'))
+  done();
+})
+;
+gulp.task('aio-build:code', function(done){
+  return gulp
+    .src(dest + 'index.html')
+    .pipe(plugins.useref())
+    .pipe(plugins.if('*.js', plugins.uglify()))
+    .pipe(plugins.if('*.css', optimizeCss()))
+    .pipe(gulp.dest(build))
+    done();
+});
+
 gulp.task('aio:kitchen:start', function() {
     runSequence(
         //['aio-build:kitchen-frameworks:css', 'aio-build:kitchen-frameworks:js', 'aio-inject:kitchen:frameworks'],
@@ -401,3 +478,21 @@ gulp.task('aio:kitchen:start', function() {
         'aio-watch:kitchen'
     );
 });
+
+gulp.task('aio:kitchen:cooking', function() {
+    runSequence(
+      ['aio-clean:kitchen:template'],
+      'aio-break:template:html',
+      'aio-break:template:less'
+    );
+});
+
+gulp.task('aio:kitchen:build', function() {
+    runSequence(
+      ['aio-clean:build'],
+      'aio-build:code',
+      'aio-copy:assets'
+    );
+});
+
+

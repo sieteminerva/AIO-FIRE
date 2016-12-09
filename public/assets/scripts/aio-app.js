@@ -8,11 +8,12 @@ angular
     'angular.filter',
     'semantic-ui',
     'vTabs',
+    'angular-svg-round-progressbar',
     // 'CaseFilter',
     // 'smoothScroll'
     // Internal modules
     'aio.routes',
-    // Interna Directives
+    // Internal Directives
     'aio.readmore',
   ])
   .config(function(){
@@ -83,11 +84,15 @@ angular
   .module('aio')
   .controller('MainCtrl', ['$scope', 'AuthFactory', 'FirebaseFactory', function($scope, AuthFactory, FirebaseFactory){
 
+
     $scope.auth = AuthFactory;
 
     $scope.auth.$onAuthStateChanged(function(aioUser){
       $scope.aioUser = aioUser;
     });
+    $scope.generalTabs = {
+      active: 0
+    };
 
     $scope.general = FirebaseFactory.getObject('general');
 
@@ -218,9 +223,6 @@ angular
               templateUrl: getTemplate('auth', 'login'),
               controller: 'AuthCtrl'
             },
-            'navbar@dashboard': {
-              templateUrl: getSection('homepage', 'navbar'),
-            },
           }
         })
         .state('registration', {
@@ -234,9 +236,6 @@ angular
             '': {
               templateUrl: getTemplate('auth', 'registration'),
               controller: 'AuthCtrl'
-            },
-            'navbar@dashboard': {
-              templateUrl: getSection('homepage', 'navbar'),
             },
           }
         })
@@ -252,9 +251,6 @@ angular
             '': {
               templateUrl: getTemplate('auth', 'verification'),
               controller: 'AuthCtrl'
-            },
-            'navbar@dashboard': {
-              templateUrl: getSection('homepage', 'navbar'),
             },
           }
         })
@@ -273,9 +269,6 @@ angular
             '': {
               templateUrl: getTemplate('auth', 'user'),
               controller: 'AuthCtrl'
-            },
-            'navbar@dashboard': {
-              templateUrl: getSection('homepage', 'navbar'),
             },
           }
         });
@@ -395,6 +388,14 @@ angular
       return 'shared/components/' + filename + '.html';
     }
 
+    function getSharedTemplate(filename){
+      return 'shared/blocks/' + filename + '.html';
+    }
+
+    function getModuleTemplate(module, filename){
+      return 'modules/aio-site/' + module + '/' + filename + '.html';
+    }
+
     $urlRouterProvider.otherwise('/');
     $stateProvider
       .state('homepage', {
@@ -402,15 +403,18 @@ angular
         resolve: {
           // controller will not be loaded until $waitForSignIn resolves
           // Auth refers to our $firebaseAuth wrapper in the factory below
-          "currentAuth": ['AuthFactory', function(AuthFactory) {
+          currentAuth: ['AuthFactory', function(AuthFactory) {
             // $waitForSignIn returns a promise so the resolve waits for it to complete
             return AuthFactory.$waitForSignIn();
+          }],
+          loadStaff: ['FirebaseFactory', function(FirebaseFactory){
+            return FirebaseFactory.getArray('staffs');
           }]
         },
         views: {
           '': {
             templateUrl: getTemplate('homepage', 'homepage'),
-            controller: 'MainCtrl',
+            controller: 'MainCtrl'
           },
           'navbar@homepage': {
             templateUrl: getTemplateComponent('main-navigation.menu'),
@@ -425,160 +429,42 @@ angular
             controller: 'MainCtrl'
           },
           'specialization@homepage': {
-            templateUrl: getSection('homepage', 'specialization.homepage'),
+            templateUrl: getModuleTemplate('specialization', 'specialization.homepage'),
             controller: 'SpecializationCtrl'
           },
           'philosophy@homepage': {
-            templateUrl: getSection('homepage', 'philosophy.homepage'),
+            templateUrl: getModuleTemplate('philosophy', 'philosophy.homepage'),
             controller: 'PhilosophyCtrl'
           },
           'staff@homepage': {
-            templateUrl: getSection('homepage', 'staff.homepage'),
+            templateUrl: getModuleTemplate('staff', 'staff.homepage'),
             controller: 'StaffCtrl'
           },
           'service@homepage': {
-            templateUrl: getSection('homepage', 'service.homepage'),
+            templateUrl: getModuleTemplate('service', 'service.homepage'),
             controller: 'ServiceCtrl'
           },
+          'company-profile@homepage': {
+            templateUrl: getSharedTemplate('company-profile.block'),
+            controller: 'MainCtrl'
+          },
           'experience@homepage': {
-            templateUrl: getSection('homepage', 'experience.homepage'),
+            templateUrl: getModuleTemplate('experience', 'experience.homepage'),
             controller: 'ExperienceCtrl'
           },
           'publication@homepage': {
-            templateUrl: getSection('homepage', 'publication.homepage'),
+            templateUrl: getModuleTemplate('publication', 'publication.homepage'),
             controller: 'PublicationCtrl'
           },
           'footer@homepage': {
             templateUrl: getSection('homepage', 'footer.homepage'),
             controller: 'MainCtrl'
+          },
+          'dev-footer@homepage': {
+            templateUrl: getSharedTemplate('dev-footer.block')
           }
         }
       });
-
-  }]);
-
-angular.module('aio')
-    .factory('AioWriterFactory', ['facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', function(facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory){
-      data = {};
-
-      return data;
-    }])
-    // controller
-    .controller('AioWriterCtrl', ['$scope', 'facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', 'AioWriterFactory', function($scope, facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory, AioWriterFactory){
-      $scope.keyword = 'love';
-      $scope.limit = 10;
-      $scope.lang = 'en';
-      $scope.rssUrl = 'http://rss.detik.com/index.php/hot';
-      $scope.articles = [];
-      $scope.images = [];
-      $scope.videos = [];
-      $scope.rssFeeds = [];
-      $scope.vimeoVids = [];
-      $scope.feedTabs = {
-        active: 0
-      };
-      $scope.getWikipediaArticle = function(){
-        wikipediaFactory.searchArticles({
-          term: $scope.keyword,
-          lang: $scope.lang,
-          gsrlimit: $scope.limit,
-        }).then(function(_data) {
-        //on success
-        $scope.articles = _data.data.query.pages;
-        console.log($scope.articles);
-        }).catch(function(error) {
-          console.error('could not retrieved data');
-        });
-      };
-
-      $scope.getFlickrImage = function(){
-        flickrFactory.getImagesByTags({
-          tags: $scope.keyword,
-        }).then(function(_data){
-          $scope.images = _data.data.items;
-          console.log($scope.images);
-        }).catch(function (error) {
-           console.error('could not retrieved images');
-        });
-
-      };
-
-      $scope.getVideos = function(){
-        youtubeFactory.getVideosFromSearchByParams({
-            q: $scope.keyword,
-            maxResults: $scope.limit,
-        }).then(function (_data) {
-            $scope.videos = _data.data.items;
-            console.log($scope.videos);
-        }).catch(function (error) {
-            console.error('could not retrieved Youtube Videos');
-        });
-
-        vimeoFactory.getVideosFromTag({
-            tag:$scope.keyword,
-            per_page:$scope.limit,
-        }).then(function(_data){
-            $scope.vimeoVids = _data.data.data;
-            console.log($scope.vimeoVids);
-        }).catch(function (_data) {
-            console.error('could not retrieved Vimeo Videos');
-        });
-
-      };
-      $scope.rssUrls = [
-        'http://rss.detik.com/index.php/hot'
-      ];
-      $scope.rssUrl = $scope.rssUrls[0];
-
-      $scope.addNewRss = function(item){
-        $scope.rssUrls.push(item);
-        $scope.loadRssFeed(item);
-        console.log($scope.rssFeeds);
-      };
-
-      $scope.removeRss = function(index){
-        $scope.rssUrls.splice(index, 1);
-      };
-
-      $scope.loadRssFeed = function(item){
-        rssFactory.getFeed(item).then(function(_data){
-          $scope.rssFeeds = _data.data.responseData.feed.entries;
-          console.log(item);
-        }).catch(function(error){
-          console.error('could not retrieved rss feed');
-        });
-      };
-
-
-      $scope.searchFeed = function(){
-        $scope.getWikipediaArticle();
-        $scope.getFlickrImage();
-        $scope.getVideos();
-        $scope.loadRssFeed();
-      };
-       $scope.loadRssFeed($scope.rssUrls);
-    }])
-
-    // routes
-    .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('aio-writer', {
-        parent:'dashboard',
-        url:'/aio-writer',
-        views: {
-          'block-right@dashboard': {
-            abstract: true,
-            templateUrl: getTemplate('aio-writer', 'aio-writer'),
-            controller: 'AioWriterCtrl'
-          }
-        }
-      })
-      ;
 
   }]);
 
@@ -597,15 +483,15 @@ angular
         views: {
           'block-right@dashboard': {
             abstract: true,
-            templateUrl: getTemplate('general', 'general'),
+            templateUrl: getTemplate('aio-site', 'general'),
             controller: 'MainCtrl'
           },
           'module-menu@general': {
-            templateUrl: getTemplate('general', 'menu.module')
+            templateUrl: getTemplate('aio-site', 'menu.module')
           },
           'module-block@general': {
             abstract:true,
-            templateUrl: getTemplate('general', 'general.list')
+            templateUrl: getTemplate('aio-site', 'general.list')
           }
         }
       })
@@ -614,13 +500,205 @@ angular
         views: {
           'module-block@general': {
             abstract: true,
-            templateUrl: getTemplate('general', 'general.edit'),
+            templateUrl: getTemplate('aio-site', 'general.edit'),
             controller: 'MainCtrl'
           }
         }
       });
 
   }]);
+
+angular.module('aio')
+    .factory('AioWriterFactory', ['facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', function(facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory){
+      data = {};
+
+      return data;
+    }])
+    // controller
+    .controller('AioEditorCtrl', ['$scope', 'facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', 'AioWriterFactory', function($scope, facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory, AioWriterFactory){
+
+
+
+    }]);
+
+angular.module('aio')
+    .factory('AioWriterFactory', ['itunesFactory', 'facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', function(itunesFactory, facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory){
+      data = {};
+
+      return data;
+    }])
+    // controller
+    .controller('AioFeedCtrl', ['$scope', 'itunesFactory', 'facebookFactory', 'vimeoFactory', 'tumblrFactory', 'flickrFactory', 'rssFactory', 'youtubeFactory', 'wikipediaFactory', 'AioWriterFactory', function($scope, itunesFactory, facebookFactory, vimeoFactory, tumblrFactory, flickrFactory, rssFactory, youtubeFactory, wikipediaFactory, AioWriterFactory){
+      $scope.keyword = 'hope';
+      $scope.limit = 10;
+      $scope.lang = 'en';
+      $scope.rssUrl = 'http://rss.detik.com/index.php/hot';
+      $scope.articles = [];
+      $scope.images = [];
+      $scope.videos = [];
+      $scope.rssFeeds = [];
+      $scope.vimeoVids = [];
+      $scope.feedTabs = {
+        active: 0
+      };
+      $scope.musics = [];
+
+      $scope.updateArtist = function(){
+        itunesFactory.setArtist($scope.keyword);
+      };
+      $scope.getItunesMusic = function(){
+        $scope.updateArtist();
+        itunesFactory.callItunes()
+        .then(function(_data){
+          $scope.musics = _data.results;
+          //console.log($scope.musics);
+        }).catch(function(error) {
+          console.error('could not retrieved data from itunes', error);
+        });
+      };
+
+      $scope.getWikipediaArticle = function(){
+        wikipediaFactory.searchArticles({
+          term: $scope.keyword,
+          lang: $scope.lang,
+          gsrlimit: $scope.limit,
+        }).then(function(_data) {
+        //on success
+        $scope.articles = _data.data.query.pages;
+        //console.log($scope.articles);
+        }).catch(function(error) {
+          console.error('could not retrieved data');
+        });
+      };
+
+      $scope.getFlickrImage = function(){
+        flickrFactory.getImagesByTags({
+          tags: $scope.keyword,
+        }).then(function(_data){
+          $scope.images = _data.data.items;
+          //console.log($scope.images);
+        }).catch(function (error) {
+           console.error('could not retrieved images');
+        });
+
+      };
+
+      $scope.getVideos = function(){
+        youtubeFactory.getVideosFromSearchByParams({
+            q: $scope.keyword,
+            maxResults: $scope.limit,
+        }).then(function (_data) {
+            $scope.videos = _data.data.items;
+            //console.log($scope.videos);
+        }).catch(function (error) {
+            console.error('could not retrieved Youtube Videos');
+        });
+
+        vimeoFactory.getVideosFromTag({
+            tag:$scope.keyword,
+            per_page:$scope.limit,
+        }).then(function(_data){
+            $scope.vimeoVids = _data.data.data;
+            //console.log($scope.vimeoVids);
+        }).catch(function (_data) {
+            console.error('could not retrieved Vimeo Videos');
+        });
+
+      };
+      $scope.rssUrls = [
+        'http://rss.detik.com/index.php/hot'
+      ];
+      $scope.rssUrl = $scope.rssUrls[0];
+
+      $scope.addNewRss = function(item){
+        $scope.rssUrls.push(item);
+        $scope.loadRssFeed(item);
+      };
+
+      $scope.removeRss = function(index){
+        $scope.rssUrls.splice(index, 1);
+      };
+
+      $scope.loadRssFeed = function(item){
+        rssFactory.getFeed(item).then(function(_data){
+          $scope.rssFeeds = _data.data.responseData.feed.entries;
+        }).catch(function(error){
+          console.error('could not retrieved rss feed');
+        });
+      };
+
+
+      $scope.searchFeed = function(){
+        $scope.getWikipediaArticle();
+        $scope.getFlickrImage();
+        $scope.getItunesMusic();
+        $scope.getVideos();
+        $scope.loadRssFeed($scope.rssUrls);
+      };
+       $scope.loadRssFeed($scope.rssUrls);
+    }]);
+
+angular
+  .module('aio')
+  // routes
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('aio-writer', {
+        parent:'dashboard',
+        url:'/aio-writer',
+        views: {
+          'block-right@dashboard': {
+            abstract: true,
+            templateUrl: getTemplate('aio-writer', 'aio-feed'),
+            controller: 'AioFeedCtrl'
+          },
+          'block-left@dashboard': {
+            abstract: true,
+            templateUrl: getTemplate('aio-writer', 'aio-editor'),
+            controller: 'AioEditorCtrl'
+          }
+        }
+      })
+      ;
+  }]);
+
+angular.module('aio')
+  .directive('aioCarousel', function() {
+    return {
+      restrict: 'E',
+      transclude: false,
+      link: function (scope) {
+        scope.initCarousel = function(element) {
+          // provide any default options you want
+          var defaultOptions = {};
+          var customOptions = scope.$eval($(element).attr('carousel-options'));
+          // combine the two options objects
+          for(var key in customOptions) {
+            defaultOptions[key] = customOptions[key];
+          }
+          // init carousel
+          $(element).owlCarousel(defaultOptions);
+        };
+      }
+    };
+  })
+  .directive('aioCarouselItem', function() {
+    return {
+      restrict: 'A',
+      transclude: false,
+      link: function(scope, element) {
+        // wait for the last item in the ng-repeat then call init
+        if(scope.$last) {
+          scope.initCarousel(element.parent());
+        }
+      }
+    };
+  });
 
 'use strict';
 
@@ -786,6 +864,680 @@ angular
     };
   });
 
+
+angular
+  .module('aio')
+  .factory('TemplateFactory', function(){
+    data = {};
+
+
+
+    data.getSubModuleTemplate = function(module, submodule, filename){
+      return 'modules/' + module + '/' + submodule + '/' + filename + '.html';
+    };
+
+
+    return data;
+  });
+
+angular
+  .module('aio')
+  .controller('ExperienceCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
+    $scope.experiences = FirebaseFactory.getArray('experiences');
+
+    //console.log($scope.experiences);
+    $scope.experienceTabs = {
+      active: 0
+    }
+    // Add Experience
+    $scope.addExperience = function(item){
+      $scope.experiences.$add(item).then(function(){
+        $state.go('experience');
+      }).catch(function(error){
+        console.log('error saving experience data');
+      });
+    };
+
+    // Remove Experience
+    $scope.removeExperience = function(item){
+      $scope.experiences.$remove(item).then(function(ref){
+
+      });
+    };
+
+    $scope.saveExperience = function(){
+      $scope.experiences.$save().then(function(){
+        console.log('data experience has been save');
+      }).catch(function(error){
+        console.log('error saving experience data');
+      });
+    };
+  }]);
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('experience', {
+        parent:'general',
+        url:'/experience',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('experience', 'experience.list'),
+            controller: 'ExperienceCtrl'
+          }
+        }
+      })
+      .state('experience.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            templateUrl: getTemplate('experience', 'experience.add'),
+            controller: 'ExperienceCtrl'
+          }
+        }
+      });
+
+  }]);
+
+angular
+  .module('aio')
+  .controller('PhilosophyCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
+    $scope.philosophies = FirebaseFactory.getArray('philosophies');
+
+    $scope.philosophyCarousel = {
+      items: 1,
+      autoplay: false,
+      nav: false,
+      dots: true,
+      dotContainer: 'dot-holder',
+      itemElement: 'div',
+      itemClass: 'philosophy carousel',
+      dotsClass: 'dot-holder',
+      dotClass: 'carousel-dot',
+      navContainerClass: 'nav-holder',
+      navClass: ['nav-prev', 'nav-next'],
+      navText: [ '<i class="chevron circle left arrow icon"></i>', '<i class="chevron circle left right arrow icon"></i>' ],
+      loop:false,
+    };
+
+    //console.log($scope.philosophies);
+    // Add Philosophy
+    $scope.addPhilosophy = function(item){
+      $scope.philosophies.$add(item).then(function(){
+        $state.go('philosophy');
+      }).catch(function(error){
+        console.log('error saving philosophy data');
+      });
+    };
+
+    // Remove Philosophy
+    $scope.removePhilosophy = function(item){
+      $scope.philosophies.$remove(item).then(function(ref){
+
+      });
+    };
+    $scope.savePhilosophy = function(){
+      $scope.philosophies.$save().then(function(){
+        console.log('data philosophy has been save');
+      }).catch(function(error){
+        console.log('error saving philosophy data');
+      });
+    };
+  }]);
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('philosophy', {
+        parent:'general',
+        url:'/philosophy',
+        views: {
+          'module-block@general': {
+            abstract:true,
+            templateUrl: getTemplate('philosophy', 'philosophy.list'),
+            controller: 'PhilosophyCtrl'
+          }
+        }
+      })
+      .state('philosophy.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            templateUrl: getTemplate('philosophy', 'philosophy.add'),
+            controller: 'PhilosophyCtrl'
+          }
+        }
+      });
+
+  }]);
+
+angular
+  .module('aio')
+  .controller('PublicationCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
+    $scope.publications = FirebaseFactory.getArray('publications');
+
+    //console.log($scope.publications);
+    $scope.publicationCarousel = {
+      items: 1,
+      nav: true,
+      center: true,
+      itemElement: 'figure',
+      itemClass: 'publication carousel',
+      navContainerClass: 'nav-holder',
+      navClass: ['nav-prev', 'nav-next'],
+      navText: [ '<i class="chevron circle left arrow icon"></i>', '<i class="chevron circle left right arrow icon"></i>' ],
+      loop:false,
+      responsive: {
+        480 : {
+          items : 1,
+        },
+        768 : {
+          items : 1,
+        },
+        1024 : {
+          items : 1,
+        },
+        1280 : {
+          items : 1,
+        }
+      }
+    };
+    // Add Publication
+    $scope.addPublication = function(item){
+      $scope.publications.$add(item).then(function(){
+        $state.go('publication');
+      }).catch(function(error){
+        console.log('error saving publication data');
+      });
+    };
+
+    // Remove Publication
+    $scope.removePublication = function(item){
+      $scope.publications.$remove(item).then(function(ref){
+
+      });
+    };
+    $scope.savePublication = function(){
+      $scope.publications.$save().then(function(){
+        console.log('data publication has been save');
+      }).catch(function(error){
+        console.log('error saving publication data');
+      });
+    };
+  }]);
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+   var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('publication', {
+        parent:'general',
+        url:'/publication',
+        views: {
+          'module-block@general': {
+            abstract:true,
+            templateUrl: getTemplate('publication', 'publication.list'),
+            controller: 'PublicationCtrl'
+          }
+        }
+      })
+      .state('publication.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            templateUrl: getTemplate('publication', 'publication.add'),
+            controller: 'PublicationCtrl'
+          }
+        }
+      });
+
+  }]);
+
+angular
+  .module('aio')
+  .controller('ServiceCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
+    $scope.services = FirebaseFactory.getArray('services');
+
+    //console.log($scope.services);
+
+    // Add New Staff
+    $scope.addService = function(item){
+      $scope.services.$add(item).then(function(){
+        $state.go('service');
+      }).catch(function(error){
+        console.log('error saving service data');
+      });
+    };
+
+    // Remove Service
+    $scope.removeService = function(item){
+      $scope.services.$remove(item).then(function(ref){
+
+      });
+    };
+
+    $scope.saveService = function(){
+      $scope.services.$save().then(function(){
+        console.log('data service has been save');
+      }).catch(function(error){
+        console.log('error saving service data');
+      });
+    };
+  }])
+  ;
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('service', {
+        parent:'general',
+        url:'/service',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('service', 'service.list'),
+            controller: 'ServiceCtrl'
+          }
+        }
+      })
+      .state('service.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            templateUrl: getTemplate('service', 'service.add'),
+            controller: 'ServiceCtrl'
+          }
+        }
+      });
+
+  }]);
+
+angular
+  .module('aio')
+  .controller('SpecializationCtrl', ['$scope', '$state', '$firebaseObject', '$firebaseArray', '$stateParams', 'FirebaseFactory', function($scope, $state, $firebaseObject, $firebaseArray, $stateParams, FirebaseFactory){
+    $scope.specializations = FirebaseFactory.getArray('specializations');
+
+
+    var rootRef = firebase.database().ref();
+    var base = rootRef.child('en-US');
+    var specializationRef = base.child('specializations');
+
+
+
+    // Add Specialization
+    $scope.addSpecialization = function(item){
+      $scope.specializations.$add(item).then(function(){
+        $state.go('specialization');
+      }).catch(function(error){
+        console.log('error saving specialization data');
+      });
+    };
+
+    // Remove Specialization
+    $scope.removeSpecialization = function(item){
+      $scope.specializations.$remove(item).then(function(ref){
+
+      });
+    };
+
+
+    // Edit Specialization
+    $scope.editSpecialization = function(item){
+
+      var ref = specializationRef.child(id);
+      var data = $firebaseObject(ref);
+
+      data.$bindTo($scope, "currentObj");
+
+      data.$loaded().then(function(obj) {
+        console.log(id);
+        console.log(obj === data); // true
+
+        angular.forEach($scope.currentObj, function(value, key) {
+          console.log(key, value);
+        });
+
+        console.log($scope.currentObj);
+
+
+
+        $state.go('specialization.edit', {id: id});
+
+      })
+      .catch(function(error) {
+        console.error("Error:", error);
+      });
+
+    };
+
+    /*
+    * index = $scope.specializations.$indexFor(id) + 1;
+      var item = $scope.specializations.$getRecord(id);
+      var id = $scope.specializations.$keyAt(item);
+    * TODO TODO TODO
+    * failed toto
+     */
+    // Update
+    $scope.updateSpecialization = function(item) {
+
+      var id = $scope.specializations.$keyAt(item);
+      var ref = specializationRef.child(id);
+      var data = $firebaseObject(ref);
+
+      data.$bindTo($scope, "currentObj");
+
+      data.$save(item).then(function (ref) {
+        console.log("Saved !");
+        $state.go('specialization');
+      }, function (error) {
+        console.log("Error:", error);
+      });
+
+    };
+
+
+  }]);
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('specialization', {
+        parent:'general',
+        url:'/specialization',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('specialization', 'specialization.list'),
+            controller: 'SpecializationCtrl'
+          }
+        }
+      })
+      .state('specialization.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('specialization', 'specialization.add'),
+            controller: 'SpecializationCtrl',
+          }
+        }
+      })
+      .state('specialization.edit', {
+        url:'/edit/:id',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('specialization', 'specialization.edit'),
+            controller: 'SpecializationCtrl'
+          }
+        }
+      });
+
+  }]);
+
+angular
+  .module('aio')
+  .controller('StaffCtrl', ['$scope', '$state', '$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($scope, $state, $firebaseObject, $firebaseArray, FirebaseFactory){
+    $scope.staffs = FirebaseFactory.getArray('staffs');
+    specializationRef = firebase.database().ref().child('en-US').child('staffs').child('specialization');
+    //console.log($scope.staffs);
+    // Frontend Settings
+
+    $scope.staffCarousel = {
+      autoplay: false,
+      nav: true,
+      itemElement: 'figure',
+      itemClass: 'team carousel',
+      navContainerClass: 'nav-holder',
+      navClass: ['nav-prev', 'nav-next'],
+      navText: [ '<i class="chevron circle left arrow icon"></i>', '<i class="chevron circle left right arrow icon"></i>' ],
+      loop:false,
+      margin: 20,
+      responsive: {
+        480 : {
+          items : 1,
+          center: true,
+        },
+        768 : {
+          items : 2,
+        },
+        1024 : {
+          items : 3,
+        },
+        1280 : {
+          items : 3,
+        }
+      }
+    };
+
+    // Add New Staff
+    $scope.addStaff = function(item){
+      $scope.staffs.$add(item).then(function(){
+        $state.go('staff');
+      }).catch(function(error){
+        console.log('error saving staff data');
+      });
+    };
+
+    // Remove Specialization
+    $scope.removeStaff = function(item){
+      $scope.staffs.$remove(item).then(function(ref){
+
+      });
+    };
+
+    $scope.saveStaff = function(){
+      $scope.staffs.$save().then(function(){
+        console.log('data staff has been save');
+      }).catch(function(error){
+        console.log('error saving staff data');
+      });
+    };
+
+  }]);
+
+angular
+  .module('aio')
+  .factory('StaffFactory', ['$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($firebaseObject, $firebaseArray, FirebaseFactory){
+    return $firebaseArray.$extend({
+
+    });
+
+  }]);
+
+angular
+  .module('aio.routes')
+  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
+    var prefix = 'modules/aio-site/';
+    function getTemplate(module, filename){
+      return prefix + module + '/' + filename + '.html';
+    }
+    $urlRouterProvider.otherwise('/');
+    $stateProvider
+      .state('staff', {
+        parent:'general',
+        url:'/staff',
+        views: {
+          'module-block@general': {
+            abstract: true,
+            templateUrl: getTemplate('staff', 'staff.list'),
+            controller: 'StaffCtrl'
+          }
+        }
+      })
+      .state('staff.add', {
+        url:'/add',
+        views: {
+          'module-block@general': {
+            templateUrl: getTemplate('staff', 'staff.add'),
+            controller: 'StaffCtrl'
+          }
+        }
+      });
+  }]);
+
+angular
+  .module('aio')
+  .controller('StaffDynamicCtrl', ['$scope', '$state', 'StaffDynamicFactory', function($scope, $state, StaffDynamicFactory){
+
+    //var id = $scope.specializations.$keyAt(item)
+    //var index = $scope.specializations.$indexFor(id) + 1;
+
+    var ref = firebase.database().ref().child('en-US').child('staffs');
+    var educationRef = ref.child('educations');
+
+
+    $scope.staffs = StaffDynamicFactory(ref);
+    $scope.staff = {};
+    $scope.staff.educations = [];
+    $scope.staff.specializations = [];
+    $scope.staff.experiences = [];
+    $scope.staff.affiliations = [];
+    $scope.staff.languages = [];
+    $scope.staff.socmeds = [];
+
+
+    $scope.addStaff = function(item){
+      $scope.staffs.$add(item).then(function(){
+        $state.go('staff');
+      }).catch(function(error){
+        console.log('error saving staff data');
+      });
+    };
+
+    $scope.addEducation = function(item){
+      $scope.staff.educations.$add(item).then(function(){
+        $state.go('staff');
+      }).catch(function(error){
+        console.log('error saving staff education data');
+      });
+    };
+
+    $scope.addNewEducationField = function(){
+      $scope.staff.educations.push({});
+      console.log($scope.staff.educations);
+    };
+    $scope.deleteEducationField = function (index){
+      $scope.staff.educations.splice(index, 1);
+      console.log($scope.staff.educations);
+    };
+
+
+    $scope.addNewSpecializationField = function(){
+      $scope.staff.specializations.push({});
+      console.log($scope.staff.specializations);
+    };
+    $scope.deleteSpecializationField = function (index){
+      $scope.staff.specializations.splice(index, 1);
+      console.log($scope.staff.specializations);
+    };
+
+
+    $scope.addNewExperienceField = function(){
+      $scope.staff.experiences.push({});
+      console.log($scope.staff.experiences);
+    };
+    $scope.deleteExperienceField = function (index){
+      $scope.staff.experiences.splice(index, 1);
+      console.log($scope.staff.experiences);
+    };
+
+
+
+    $scope.addNewAffiliationField = function(){
+      $scope.staff.affiliations.push({});
+      console.log($scope.staff.affiliations);
+    };
+    $scope.deleteAffiliationField = function (index){
+      $scope.staff.affiliations.splice(index, 1);
+      console.log($scope.staff.affiliations);
+    };
+
+
+    $scope.addNewLanguageField = function(){
+      $scope.staff.languages.push({});
+      console.log($scope.staff.languages);
+    };
+    $scope.deleteLanguageField = function (index){
+      $scope.staff.languages.splice(index, 1);
+      console.log($scope.staff.languages);
+    };
+
+
+    $scope.addNewSocmedField = function(){
+      $scope.staff.socmeds.push({});
+      console.log($scope.staff.socmeds);
+    };
+    $scope.deleteSocmedField = function (index){
+      $scope.staff.socmeds.splice(index, 1);
+      console.log($scope.staff.socmeds);
+    };
+
+
+    // Add New Staff
+    function initFields(){
+
+      $scope.addNewSpecializationField();
+      $scope.addNewExperienceField();
+      $scope.addNewEducationField();
+      $scope.addNewAffiliationField();
+      $scope.addNewLanguageField();
+      $scope.addNewSocmedField();
+    }
+    initFields();
+
+    // Remove Specialization
+    $scope.removeStaff = function(item){
+      $scope.staffs.$remove(item).then(function(ref){
+
+      });
+    };
+
+
+
+
+    //console.log($scope.staffs);
+
+  }]);
+
+angular
+  .module('aio')
+  .factory('StaffDynamicFactory', ['$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($firebaseObject, $firebaseArray, FirebaseFactory){
+    return $firebaseArray.$extend({
+
+    });
+
+  }]);
 
 angular.module('aio')
     .factory('facebookFactory', ['$http', 'facebookSearchDataService', function ($http, facebookSearchDataService) {
@@ -1053,6 +1805,47 @@ angular.module("aio")
             return flickrSearchData;
         };
     });
+
+angular.module("aio")
+  .factory('itunesFactory', ['$http', '$q', function($http, $q) {
+
+    var itunesFactory = {};
+    var baseUrl = 'https://itunes.apple.com/search?term=';
+    var _artist = '';
+    var _finalUrl = '';
+
+    var makeUrl = function() {
+        _artist = _artist.split(' ').join('+');
+        _finalUrl = baseUrl + _artist + '&callback=JSON_CALLBACK';
+        return _finalUrl;
+    };
+
+    itunesFactory.setArtist = function(artist) {
+        _artist = artist;
+    };
+
+    itunesFactory.getArtist = function() {
+        return _artist;
+    };
+
+    itunesFactory.callItunes = function() {
+        makeUrl();
+        var deferred = $q.defer();
+        $http({
+            method: 'JSONP',
+            url: _finalUrl
+        }).success(function(data) {
+            deferred.resolve(data);
+        }).error(function() {
+            deferred.reject('There was an error');
+        });
+        return deferred.promise;
+    };
+
+
+
+    return itunesFactory;
+  }]);
 
 angular.module('aio')
     .factory('tumblrFactory', ['$http', 'tumblrSearchDataService', function ($http, tumblrSearchDataService) {
@@ -1883,592 +2676,3 @@ angular.module('aio')
             return youtubeSearchData;
         };
     });
-
-angular
-  .module('aio')
-  .controller('ExperienceCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
-    $scope.experiences = FirebaseFactory.getArray('experiences');
-
-    //console.log($scope.experiences);
-    //
-    // Add Experience
-    $scope.addExperience = function(item){
-      $scope.experiences.$add(item).then(function(){
-        $state.go('experience');
-      }).catch(function(error){
-        console.log('error saving experience data');
-      });
-    };
-
-    // Remove Experience
-    $scope.removeExperience = function(item){
-      $scope.experiences.$remove(item).then(function(ref){
-
-      });
-    };
-
-    $scope.saveExperience = function(){
-      $scope.experiences.$save().then(function(){
-        console.log('data experience has been save');
-      }).catch(function(error){
-        console.log('error saving experience data');
-      });
-    };
-  }]);
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('experience', {
-        parent:'general',
-        url:'/experience',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('experience', 'experience.list'),
-            controller: 'ExperienceCtrl'
-          }
-        }
-      })
-      .state('experience.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            templateUrl: getTemplate('experience', 'experience.add'),
-            controller: 'ExperienceCtrl'
-          }
-        }
-      });
-
-  }]);
-
-angular
-  .module('aio')
-  .controller('PhilosophyCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
-    $scope.philosophies = FirebaseFactory.getArray('philosophies');
-
-    //console.log($scope.philosophies);
-    // Add Philosophy
-    $scope.addPhilosophy = function(item){
-      $scope.philosophies.$add(item).then(function(){
-        $state.go('philosophy');
-      }).catch(function(error){
-        console.log('error saving philosophy data');
-      });
-    };
-
-    // Remove Philosophy
-    $scope.removePhilosophy = function(item){
-      $scope.philosophies.$remove(item).then(function(ref){
-
-      });
-    };
-    $scope.savePhilosophy = function(){
-      $scope.philosophies.$save().then(function(){
-        console.log('data philosophy has been save');
-      }).catch(function(error){
-        console.log('error saving philosophy data');
-      });
-    };
-  }]);
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('philosophy', {
-        parent:'general',
-        url:'/philosophy',
-        views: {
-          'module-block@general': {
-            abstract:true,
-            templateUrl: getTemplate('philosophy', 'philosophy.list'),
-            controller: 'PhilosophyCtrl'
-          }
-        }
-      })
-      .state('philosophy.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            templateUrl: getTemplate('philosophy', 'philosophy.add'),
-            controller: 'PhilosophyCtrl'
-          }
-        }
-      });
-
-  }]);
-
-angular
-  .module('aio')
-  .controller('PublicationCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
-    $scope.publications = FirebaseFactory.getArray('publications');
-
-    //console.log($scope.publications);
-    //
-    // Add Publication
-    $scope.addPublication = function(item){
-      $scope.publications.$add(item).then(function(){
-        $state.go('publication');
-      }).catch(function(error){
-        console.log('error saving publication data');
-      });
-    };
-
-    // Remove Publication
-    $scope.removePublication = function(item){
-      $scope.publications.$remove(item).then(function(ref){
-
-      });
-    };
-    $scope.savePublication = function(){
-      $scope.publications.$save().then(function(){
-        console.log('data publication has been save');
-      }).catch(function(error){
-        console.log('error saving publication data');
-      });
-    };
-  }]);
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-   var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('publication', {
-        parent:'general',
-        url:'/publication',
-        views: {
-          'module-block@general': {
-            abstract:true,
-            templateUrl: getTemplate('publication', 'publication.list'),
-            controller: 'PublicationCtrl'
-          }
-        }
-      })
-      .state('publication.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            templateUrl: getTemplate('publication', 'publication.add'),
-            controller: 'PublicationCtrl'
-          }
-        }
-      });
-
-  }]);
-
-angular
-  .module('aio')
-  .controller('ServiceCtrl', ['$scope', '$state', 'FirebaseFactory', function($scope, $state, FirebaseFactory){
-    $scope.services = FirebaseFactory.getArray('services');
-
-    //console.log($scope.services);
-
-    // Add New Staff
-    $scope.addService = function(item){
-      $scope.services.$add(item).then(function(){
-        $state.go('service');
-      }).catch(function(error){
-        console.log('error saving service data');
-      });
-    };
-
-    // Remove Service
-    $scope.removeService = function(item){
-      $scope.services.$remove(item).then(function(ref){
-
-      });
-    };
-
-    $scope.saveService = function(){
-      $scope.services.$save().then(function(){
-        console.log('data service has been save');
-      }).catch(function(error){
-        console.log('error saving service data');
-      });
-    };
-  }])
-  ;
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('service', {
-        parent:'general',
-        url:'/service',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('service', 'service.list'),
-            controller: 'ServiceCtrl'
-          }
-        }
-      })
-      .state('service.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            templateUrl: getTemplate('service', 'service.add'),
-            controller: 'ServiceCtrl'
-          }
-        }
-      });
-
-  }]);
-
-angular
-  .module('aio')
-  .controller('SpecializationCtrl', ['$scope', '$state', '$firebaseObject', '$firebaseArray', '$stateParams', 'FirebaseFactory', function($scope, $state, $firebaseObject, $firebaseArray, $stateParams, FirebaseFactory){
-    $scope.specializations = FirebaseFactory.getArray('specializations');
-
-
-    var rootRef = firebase.database().ref();
-    var base = rootRef.child('en-US');
-    var specializationRef = base.child('specializations');
-
-
-
-    // Add Specialization
-    $scope.addSpecialization = function(item){
-      $scope.specializations.$add(item).then(function(){
-        $state.go('specialization');
-      }).catch(function(error){
-        console.log('error saving specialization data');
-      });
-    };
-
-    // Remove Specialization
-    $scope.removeSpecialization = function(item){
-      $scope.specializations.$remove(item).then(function(ref){
-
-      });
-    };
-
-
-    // Edit Specialization
-    $scope.editSpecialization = function(item){
-
-      var ref = specializationRef.child(id);
-      var data = $firebaseObject(ref);
-
-      data.$bindTo($scope, "currentObj");
-
-      data.$loaded().then(function(obj) {
-        console.log(id);
-        console.log(obj === data); // true
-
-        angular.forEach($scope.currentObj, function(value, key) {
-          console.log(key, value);
-        });
-
-        console.log($scope.currentObj);
-
-
-
-        $state.go('specialization.edit', {id: id});
-
-      })
-      .catch(function(error) {
-        console.error("Error:", error);
-      });
-
-    };
-
-    /*
-    * index = $scope.specializations.$indexFor(id) + 1;
-      var item = $scope.specializations.$getRecord(id);
-      var id = $scope.specializations.$keyAt(item);
-    * TODO TODO TODO
-    * failed toto
-     */
-    // Update
-    $scope.updateSpecialization = function(item) {
-
-      var id = $scope.specializations.$keyAt(item);
-      var ref = specializationRef.child(id);
-      var data = $firebaseObject(ref);
-
-      data.$bindTo($scope, "currentObj");
-
-      data.$save(item).then(function (ref) {
-        console.log("Saved !");
-        $state.go('specialization');
-      }, function (error) {
-        console.log("Error:", error);
-      });
-
-    };
-
-
-  }]);
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('specialization', {
-        parent:'general',
-        url:'/specialization',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('specialization', 'specialization.list'),
-            controller: 'SpecializationCtrl'
-          }
-        }
-      })
-      .state('specialization.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('specialization', 'specialization.add'),
-            controller: 'SpecializationCtrl',
-          }
-        }
-      })
-      .state('specialization.edit', {
-        url:'/edit/:id',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('specialization', 'specialization.edit'),
-            controller: 'SpecializationCtrl'
-          }
-        }
-      });
-
-  }]);
-
-angular
-  .module('aio')
-  .controller('StaffCtrl', ['$scope', '$state', '$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($scope, $state, $firebaseObject, $firebaseArray, FirebaseFactory){
-    $scope.staffs = FirebaseFactory.getArray('staffs');
-    specializationRef = firebase.database().ref().child('en-US').child('staffs').child('specialization');
-    //console.log($scope.staffs);
-    // Add New Staff
-    $scope.addStaff = function(item){
-      $scope.staffs.$add(item).then(function(){
-        $state.go('staff');
-      }).catch(function(error){
-        console.log('error saving staff data');
-      });
-    };
-
-    // Remove Specialization
-    $scope.removeStaff = function(item){
-      $scope.staffs.$remove(item).then(function(ref){
-
-      });
-    };
-
-
-    $scope.saveStaff = function(){
-      $scope.staffs.$save().then(function(){
-        console.log('data staff has been save');
-      }).catch(function(error){
-        console.log('error saving staff data');
-      });
-    };
-
-  }]);
-
-angular
-  .module('aio')
-  .factory('StaffFactory', ['$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($firebaseObject, $firebaseArray, FirebaseFactory){
-    return $firebaseArray.$extend({
-
-    });
-
-  }]);
-
-angular
-  .module('aio.routes')
-  .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider){
-    var prefix = 'modules/general/';
-    function getTemplate(module, filename){
-      return prefix + module + '/' + filename + '.html';
-    }
-    $urlRouterProvider.otherwise('/');
-    $stateProvider
-      .state('staff', {
-        parent:'general',
-        url:'/staff',
-        views: {
-          'module-block@general': {
-            abstract: true,
-            templateUrl: getTemplate('staff', 'staff.list'),
-            controller: 'StaffCtrl'
-          }
-        }
-      })
-      .state('staff.add', {
-        url:'/add',
-        views: {
-          'module-block@general': {
-            templateUrl: getTemplate('staff', 'staff.add'),
-            controller: 'StaffCtrl'
-          }
-        }
-      });
-  }]);
-
-angular
-  .module('aio')
-  .controller('StaffDynamicCtrl', ['$scope', '$state', 'StaffDynamicFactory', function($scope, $state, StaffDynamicFactory){
-
-    //var id = $scope.specializations.$keyAt(item)
-    //var index = $scope.specializations.$indexFor(id) + 1;
-
-    var ref = firebase.database().ref().child('en-US').child('staffs');
-    var educationRef = ref.child('educations');
-
-
-    $scope.staffs = StaffDynamicFactory(ref);
-    $scope.staff = {};
-    $scope.staff.educations = [];
-    $scope.staff.specializations = [];
-    $scope.staff.experiences = [];
-    $scope.staff.affiliations = [];
-    $scope.staff.languages = [];
-    $scope.staff.socmeds = [];
-
-
-    $scope.addStaff = function(item){
-      $scope.staffs.$add(item).then(function(){
-        $state.go('staff');
-      }).catch(function(error){
-        console.log('error saving staff data');
-      });
-    };
-
-    $scope.addEducation = function(item){
-      $scope.staff.educations.$add(item).then(function(){
-        $state.go('staff');
-      }).catch(function(error){
-        console.log('error saving staff education data');
-      });
-    };
-
-    $scope.addNewEducationField = function(){
-      $scope.staff.educations.push({});
-      console.log($scope.staff.educations);
-    };
-    $scope.deleteEducationField = function (index){
-      $scope.staff.educations.splice(index, 1);
-      console.log($scope.staff.educations);
-    };
-
-
-    $scope.addNewSpecializationField = function(){
-      $scope.staff.specializations.push({});
-      console.log($scope.staff.specializations);
-    };
-    $scope.deleteSpecializationField = function (index){
-      $scope.staff.specializations.splice(index, 1);
-      console.log($scope.staff.specializations);
-    };
-
-
-    $scope.addNewExperienceField = function(){
-      $scope.staff.experiences.push({});
-      console.log($scope.staff.experiences);
-    };
-    $scope.deleteExperienceField = function (index){
-      $scope.staff.experiences.splice(index, 1);
-      console.log($scope.staff.experiences);
-    };
-
-
-
-    $scope.addNewAffiliationField = function(){
-      $scope.staff.affiliations.push({});
-      console.log($scope.staff.affiliations);
-    };
-    $scope.deleteAffiliationField = function (index){
-      $scope.staff.affiliations.splice(index, 1);
-      console.log($scope.staff.affiliations);
-    };
-
-
-    $scope.addNewLanguageField = function(){
-      $scope.staff.languages.push({});
-      console.log($scope.staff.languages);
-    };
-    $scope.deleteLanguageField = function (index){
-      $scope.staff.languages.splice(index, 1);
-      console.log($scope.staff.languages);
-    };
-
-
-    $scope.addNewSocmedField = function(){
-      $scope.staff.socmeds.push({});
-      console.log($scope.staff.socmeds);
-    };
-    $scope.deleteSocmedField = function (index){
-      $scope.staff.socmeds.splice(index, 1);
-      console.log($scope.staff.socmeds);
-    };
-
-
-    // Add New Staff
-    function initFields(){
-
-      $scope.addNewSpecializationField();
-      $scope.addNewExperienceField();
-      $scope.addNewEducationField();
-      $scope.addNewAffiliationField();
-      $scope.addNewLanguageField();
-      $scope.addNewSocmedField();
-    }
-    initFields();
-
-    // Remove Specialization
-    $scope.removeStaff = function(item){
-      $scope.staffs.$remove(item).then(function(ref){
-
-      });
-    };
-
-
-
-
-    //console.log($scope.staffs);
-
-  }]);
-
-angular
-  .module('aio')
-  .factory('StaffDynamicFactory', ['$firebaseObject', '$firebaseArray', 'FirebaseFactory', function($firebaseObject, $firebaseArray, FirebaseFactory){
-    return $firebaseArray.$extend({
-
-    });
-
-  }]);

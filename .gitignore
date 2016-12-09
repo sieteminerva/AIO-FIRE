@@ -1,4 +1,7 @@
 .idea
 _kitchen
-public/assets/frameworks
+public
 node_modules
+.firebaserc
+database.rules.json
+firebase.json

@@ -2,24 +2,34 @@
 <html ng-app="aio">
   <head>
     <meta charset="utf-8">
-    <title>AIO Fire</title>
+    <title>Anggraeni &amp; Partners | Official Website</title>
     <base href="/">
     <meta name="description" content="Allinonedoor">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="Anggraeni &amp; Partners">
+    <meta name="description" content="Anggraeni and Partners adalah sebuah firma hukum di jakarta">
+    <meta name="address" content="Tendean Square KAV 17-18">
     <meta name="author" content="Allinonedoor Teknologi">
-    <meta name="address" content="Jakarta, Indonesia">
+    <link rel="shortcut icon" href="./favicon.gif">
+    <!-- build:css assets/stylesheets/aiofire.css -->
+
     <!-- frameworks:css -->
     <link rel="stylesheet" href="assets/frameworks/semantic/dist/semantic.css">
     <link rel="stylesheet" href="assets/frameworks/v-tabs/dist/v-tabs.css">
+    <link rel="stylesheet" href="assets/frameworks/owl.carousel/dist/assets/owl.carousel.css">
     <!-- endframeworks -->
     <!-- injected css kitchen -->
+    <link rel="stylesheet" href="/assets/stylesheets/aplaw-icons.css">
     <link rel="stylesheet" href="/assets/stylesheets/app.css">
     <link rel="stylesheet" href="/assets/stylesheets/semantic.color.css">
     <!-- end inject -->
+
+    <!-- endbuild -->
   </head>
   <body>
     <!-- app views -->
     <ui-view></ui-view>
+    <!-- build:js assets/scripts/aiofire.min.js -->
 
     <!-- frameworks:js -->
     <script src="assets/frameworks/firebase/firebase.js"></script>
@@ -33,10 +43,14 @@
     <script src="assets/frameworks/angular-sanitize/angular-sanitize.js"></script>
     <script src="assets/frameworks/angular-animate/angular-animate.js"></script>
     <script src="assets/frameworks/v-tabs/dist/v-tabs.js"></script>
+    <script src="assets/frameworks/owl.carousel/dist/owl.carousel.js"></script>
+    <script src="assets/frameworks/angular-svg-round-progressbar/build/roundProgress.js"></script>
     <!-- endframeworks -->
     <!-- injected js kitchen -->
     <script src="/assets/scripts/aio-app.js"></script>
     <script src="/assets/scripts/aio-view.templates.js"></script>
     <!-- end inject -->
+
+    <!-- endbuild -->
   </body>
 </html>
